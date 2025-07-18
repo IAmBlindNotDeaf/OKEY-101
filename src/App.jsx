@@ -13,9 +13,11 @@ function App() {
   // Gruppen: zwei Reihen
   const [gruppen1, setGruppen1] = useState([]);
   const [gruppen2, setGruppen2] = useState([]);
-  // Serien: zwei Reihen
-  const [serien1, setSerien1] = useState([]);
-  const [serien2, setSerien2] = useState([]);
+  // Serien: vier Reihen
+  const [serienRot, setSerienRot] = useState([]);
+  const [serienBlau, setSerienBlau] = useState([]);
+  const [serienGelb, setSerienGelb] = useState([]);
+  const [serienSchwarz, setSerienSchwarz] = useState([]);
   // Seitensteine: zwei Reihen
   const [seitensteine1, setSeitensteine1] = useState([]);
   const [seitensteine2, setSeitensteine2] = useState([]);
@@ -25,7 +27,7 @@ function App() {
 
   // Zusammenführen für Logik und Visualisierung
   const gruppen = [...gruppen1, ...gruppen2];
-  const serien = [...serien1, ...serien2];
+  const serien = [...serienRot, ...serienBlau, ...serienGelb, ...serienSchwarz];
   const seitensteine = [...seitensteine1, ...seitensteine2];
   const strafpunkte = [...strafpunkte1, ...strafpunkte2];
 
@@ -37,60 +39,76 @@ function App() {
   const gesamt = summeGruppen + summeSerien + seitenDurch3;
   const summeStrafpunkte = berechneSumme(strafpunkte);
 
+  // Für Holzblock: Array von Arrays für Serien, damit die Farben eindeutig zugeordnet werden können
+  const serienFarbig = [serienRot, serienBlau, serienGelb, serienSchwarz];
+
   return (
     <div className="container">
-      <h1>101 Okey Augenzahl Rechner</h1>
-      <StoneRow
-        title="Gruppen"
-        selected={gruppen1}
-        setSelected={setGruppen1}
-        selected2={gruppen2}
-        setSelected2={setGruppen2}
-        colorType="rot"
-      />
-      <StoneRow
-        title="Serien"
-        selected={serien1}
-        setSelected={setSerien1}
-        selected2={serien2}
-        setSelected2={setSerien2}
-        colorType="blau"
-      />
-      <StoneRow
-        title="Seitensteine"
-        selected={seitensteine1}
-        setSelected={setSeitensteine1}
-        selected2={seitensteine2}
-        setSelected2={setSeitensteine2}
-        colorType="gelb"
-      />
-      <StoneRow
-        title="Strafpunkte"
-        selected={strafpunkte1}
-        setSelected={setStrafpunkte1}
-        selected2={strafpunkte2}
-        setSelected2={setStrafpunkte2}
-        colorType="schwarz"
-      />
+      <h1>101 Okey</h1>
+      <div className="stone-row-columns">
+        {[
+          { selected: gruppen1, setSelected: setGruppen1, colorType: "rot" },
+          { selected: gruppen2, setSelected: setGruppen2, colorType: "blau" },
+        ].map((props) => (
+          <StoneRow
+            key={props.colorType}
+            title="Gr"
+            selected={props.selected}
+            setSelected={props.setSelected}
+            colorType={props.colorType}
+            vertical
+          />
+        ))}
+        {[
+          { selected: serienRot, setSelected: setSerienRot, colorType: "rot" },
+          {
+            selected: serienBlau,
+            setSelected: setSerienBlau,
+            colorType: "blau",
+          },
+          {
+            selected: serienGelb,
+            setSelected: setSerienGelb,
+            colorType: "gelb",
+          },
+          {
+            selected: serienSchwarz,
+            setSelected: setSerienSchwarz,
+            colorType: "schwarz",
+          },
+        ].map((props) => (
+          <StoneRow
+            key={props.colorType}
+            title="Se"
+            selected={props.selected}
+            setSelected={props.setSelected}
+            colorType={props.colorType}
+            vertical
+          />
+        ))}
+        <StoneRow
+          title="Ss"
+          selected={seitensteine1}
+          setSelected={setSeitensteine1}
+          colorType="gelb"
+          vertical
+        />
+        <StoneRow
+          title="Sp"
+          selected={strafpunkte1}
+          setSelected={setStrafpunkte1}
+          colorType="schwarz"
+          vertical
+        />
+      </div>
       <div className="ergebnis">
-        <h2>Ergebnis</h2>
         <Holzblock
           gruppen={gruppen}
-          serien={serien}
+          serien={serienFarbig}
           seitensteine={seitensteine}
           strafpunkte={strafpunkte}
         />
-        <p>
-          Gruppen: <b>{summeGruppen}</b>
-        </p>
-        <p>
-          Serien: <b>{summeSerien}</b>
-        </p>
-        <p>
-          Seitensteine: <b>{summeSeiten}</b> &rarr; {summeSeiten} / 3 ={" "}
-          <b>{seitenDurch3}</b> Rest <b>{seitenRest}</b>
-        </p>
-        <hr />
+
         <p>
           Gesamtsumme: <b>{gesamt}</b> (Rest Seitensteine: {seitenRest})
         </p>
@@ -101,5 +119,4 @@ function App() {
     </div>
   );
 }
-
 export default App;

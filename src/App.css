@@ -21,17 +21,18 @@ h1 {
 }
 
 .steinreihe {
-  margin-bottom: 24px;
+  min-width: 0;
+  margin-bottom: 0;
 }
 
 .steinreihe h3 {
-  margin-bottom: 8px;
-  color: #444;
+  margin-bottom: 2px;
+  font-size: 1rem;
 }
 
 .steine {
   display: flex;
-  gap: 8px;
+  gap: 2px;
   flex-wrap: nowrap;
   overflow-x: visible;
   justify-content: flex-start;
@@ -52,4 +53,34 @@ h1 {
 
 hr {
   margin: 16px 0;
+}
+
+.stone-row-columns {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.stone-row-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+}
+
+@media (max-width: 600px) {
+  .stone-row-columns {
+    gap: 6px;
+  }
+  .steinreihe {
+    min-width: 40px;
+  }
+  .stein-button,
+  .holz-stein {
+    width: 24px;
+    height: 30px;
+    font-size: 0.9rem;
+  }
 }

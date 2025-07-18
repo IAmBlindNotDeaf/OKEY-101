@@ -17,17 +17,17 @@
 }
 
 .holz-stein {
-  width: 36px;
-  height: 48px;
+  width: 22px;
+  height: 28px;
   background: #fffbe7;
   border: 2.5px solid #888;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  font-size: 0.85rem;
   font-weight: bold;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.10);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin: 0 2px;
   transition: background 0.2s;
 }
@@ -36,4 +36,4 @@
   background: transparent;
   border: none;
   box-shadow: none;
-} 
+}

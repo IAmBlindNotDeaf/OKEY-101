@@ -65,9 +65,14 @@ function chunkArray(arr, size) {
 }
 
 function Holzblock({ gruppen, serien, seitensteine }) {
-  // Jede Gruppe und Serie als eigener Block
+  // gruppen bleibt wie gehabt
   const gruppenBlocks = gruppen.map((wert) => [wert]);
-  const serienBlocks = serien.map((wert) => [wert]);
+
+  // serien ist jetzt ein Array von Arrays: [[rot], [blau], [gelb], [schwarz]]
+  // Wir erzeugen für jede Farbe die passenden Blöcke
+  const serienBlocks = serien.flatMap((serienArr, farbeIdx) =>
+    serienArr.map((wert) => ({ wert, farbeIdx }))
+  );
 
   // Seitensteine-Zuordnung: bevorzugt an Serien
   let verwendeteSeitensteine = new Set();
@@ -76,24 +81,33 @@ function Holzblock({ gruppen, serien, seitensteine }) {
 
   // 1. Versuche, Seitensteine an Serien anzulegen
   serienBlocks.forEach((block, sidx) => {
-    const steine = block.flatMap((wert) => {
-      return [wert - 1, wert, wert + 1].map((v) => {
-        let anzeige = v;
-        if (v < 2) anzeige = 1;
-        if (v > 12) anzeige = 13;
-        return anzeige;
-      });
+    const wert = block.wert !== undefined ? block.wert : block[0];
+    let steine = [wert - 1, wert, wert + 1].map((v) => {
+      let anzeige = v;
+      if (v < 2) anzeige = 1;
+      if (v > 12) anzeige = 13;
+      return anzeige;
     });
     let serienSteine = [...steine];
     let zuSerien = [];
     seitensteine.forEach((s, idx) => {
       if (verwendeteSeitensteine.has(idx)) return;
+      // Prüfe, ob der Seitenstein lückenlos links oder rechts passt
       const min = Math.min(...serienSteine);
       const max = Math.max(...serienSteine);
-      if ((s === min - 1 && min > 1) || (s === max + 1 && max < 13)) {
+      if (s === min - 1 && min > 1) {
+        // Links anfügen
+        const testArr = [s, ...serienSteine];
+        if (istLueckenlos(testArr)) {
+          serienSteine = [s, ...serienSteine];
+          verwendeteSeitensteine.add(idx);
+          zuSerien.push(s);
+        }
+      } else if (s === max + 1 && max < 13) {
+        // Rechts anfügen
         const testArr = [...serienSteine, s];
         if (istLueckenlos(testArr)) {
-          serienSteine.push(s);
+          serienSteine = [...serienSteine, s];
           verwendeteSeitensteine.add(idx);
           zuSerien.push(s);
         }
@@ -128,9 +142,10 @@ function Holzblock({ gruppen, serien, seitensteine }) {
     })),
     ...serienBlocks.map((block, idx) => ({
       type: "serie",
-      block,
+      block: [block.wert],
       seiten: seitenZuSerien[idx] || [],
       key: `sblock-${idx}`,
+      farbeIdx: block.farbeIdx, // 0=rot, 1=blau, 2=gelb, 3=schwarz
     })),
   ];
 
@@ -158,27 +173,23 @@ function Holzblock({ gruppen, serien, seitensteine }) {
       ];
     } else {
       // Serie
-      const steine = b.block.flatMap((wert) => {
-        return [wert - 1, wert, wert + 1].map((v, i) => {
-          let anzeige = v;
-          if (v < 2) anzeige = 1;
-          if (v > 12) anzeige = 13;
-          return { anzeige, i };
-        });
+      const wert = b.block[0];
+      // Sammle alle Steine (inkl. Seitensteine) und sortiere sie aufsteigend
+      let steineArr = [wert - 1, wert, wert + 1, ...b.seiten];
+      steineArr = steineArr.map(v => {
+        let anzeige = v;
+        if (v < 2) anzeige = 1;
+        if (v > 12) anzeige = 13;
+        return anzeige;
       });
+      steineArr = Array.from(new Set(steineArr)).sort((a, b) => a - b);
+      const color = farben[b.farbeIdx];
       return [
-        ...steine.map((obj, i) => (
+        ...steineArr.map((anzeige, i) => (
           <Stein
-            wert={obj.anzeige}
-            color={farben[1]}
-            keyId={`s-${obj.anzeige}-${blockIdx}-${i}`}
-          />
-        )),
-        ...b.seiten.map((s, i) => (
-          <Stein
-            wert={s}
-            color={farben[1]}
-            keyId={`ss-serie-${s}-${blockIdx}-${i}`}
+            wert={anzeige}
+            color={color}
+            keyId={`s-${anzeige}-${b.key}-${i}`}
           />
         )),
       ];
@@ -187,16 +198,14 @@ function Holzblock({ gruppen, serien, seitensteine }) {
 
   // Blöcke mit Platzhaltern verbinden
   const alleSteineMitPlatzhaltern = mitPlatzhaltern(visualBlocks);
-  // In Zeilen zu je 14 Feldern aufteilen
-  const zeilen = chunkArray(alleSteineMitPlatzhaltern, 14).map((zeile, i) =>
-    auf14Felder(zeile)
-  );
+  // In Zeilen zu je 2 Blöcken aufteilen (statt 14 Felder)
+  const blockZeilen = chunkArray(visualBlocks, 2);
 
   return (
     <div className="holzblock">
-      {zeilen.map((zeile, i) => (
+      {blockZeilen.map((blockPaar, i) => (
         <div className="holz-reihe" key={`holzreihe-${i}`}>
-          {zeile}
+          {blockPaar.flat()}
         </div>
       ))}
     </div>
