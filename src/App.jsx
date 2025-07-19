@@ -10,110 +10,67 @@ function berechneSumme(steine) {
 }
 
 function App() {
-  // Gruppen: zwei Reihen
-  const [gruppen1, setGruppen1] = useState([]);
-  const [gruppen2, setGruppen2] = useState([]);
-  // Serien: vier Reihen
-  const [serienRot, setSerienRot] = useState([]);
-  const [serienBlau, setSerienBlau] = useState([]);
-  const [serienGelb, setSerienGelb] = useState([]);
-  const [serienSchwarz, setSerienSchwarz] = useState([]);
-  // Seitensteine: zwei Reihen
+  // Gruppen
+  const [gruppen, setGruppen1] = useState([]);
+  // Serien
+  const [serien, setSerien] = useState([]);
+  // Seitensteine
   const [seitensteine1, setSeitensteine1] = useState([]);
-  const [seitensteine2, setSeitensteine2] = useState([]);
-  // Strafpunkte: zwei Reihen
-  const [strafpunkte1, setStrafpunkte1] = useState([]);
-  const [strafpunkte2, setStrafpunkte2] = useState([]);
 
   // Zusammenführen für Logik und Visualisierung
-  const gruppen = [...gruppen1, ...gruppen2];
-  const serien = [...serienRot, ...serienBlau, ...serienGelb, ...serienSchwarz];
-  const seitensteine = [...seitensteine1, ...seitensteine2];
-  const strafpunkte = [...strafpunkte1, ...strafpunkte2];
+  const gruppenSteine = [gruppen];
+  const serienSteine = [serien];
+  const seitensteine = [seitensteine1];
 
-  const summeGruppen = berechneSumme(gruppen);
-  const summeSerien = berechneSumme(serien);
-  const summeSeiten = berechneSumme(seitensteine);
-  const seitenDurch3 = Math.floor(summeSeiten / 3);
-  const seitenRest = summeSeiten % 3;
-  const gesamt = summeGruppen + summeSerien + seitenDurch3;
-  const summeStrafpunkte = berechneSumme(strafpunkte);
-
-  // Für Holzblock: Array von Arrays für Serien, damit die Farben eindeutig zugeordnet werden können
-  const serienFarbig = [serienRot, serienBlau, serienGelb, serienSchwarz];
+  // Neue Berechnung für Gruppen, Serien, Seitensteine
+  // Gruppen: Augenzahl * 3 pro Stein
+  const summeGruppen = gruppen.reduce((sum, s) => sum + s * 3, 0);
+  // Serien: Summe aller Werte in allen Bereichen
+  const summeSerien = serien.reduce(
+    (sum, bereich) => sum + bereich.reduce((bSum, v) => bSum + v, 0),
+    0
+  );
+  // Seitensteine: Nur zählen, wenn sie an eine Gruppe angereiht werden können (pro Gruppe maximal einer)
+  let verwendeteGruppen = [];
+  let verwendeteYanTas = [];
+  let summeSeiten = 0;
+  gruppen.forEach((g) => {
+    const idx = seitensteine1.findIndex(
+      (s, i) => !verwendeteYanTas[i] && s === g
+    );
+    if (idx !== -1) {
+      summeSeiten += seitensteine1[idx];
+      verwendeteYanTas[idx] = true;
+      verwendeteGruppen.push(g);
+    }
+  });
+  // Gesamtsumme: (Gruppen + Serien + Seitensteine) / 3
+  const gesamtRoh = summeGruppen + summeSerien + summeSeiten;
+  const gesamt = Math.floor(gesamtRoh / 3);
+  const rest = gesamtRoh % 3;
 
   return (
     <div className="container">
       <h1>101 Okey</h1>
       <div className="stone-row-columns">
-        {[
-          { selected: gruppen1, setSelected: setGruppen1, colorType: "rot" },
-          { selected: gruppen2, setSelected: setGruppen2, colorType: "blau" },
-        ].map((props) => (
-          <StoneRow
-            key={props.colorType}
-            title="Gr"
-            selected={props.selected}
-            setSelected={props.setSelected}
-            colorType={props.colorType}
-            vertical
-          />
-        ))}
-        {[
-          { selected: serienRot, setSelected: setSerienRot, colorType: "rot" },
-          {
-            selected: serienBlau,
-            setSelected: setSerienBlau,
-            colorType: "blau",
-          },
-          {
-            selected: serienGelb,
-            setSelected: setSerienGelb,
-            colorType: "gelb",
-          },
-          {
-            selected: serienSchwarz,
-            setSelected: setSerienSchwarz,
-            colorType: "schwarz",
-          },
-        ].map((props) => (
-          <StoneRow
-            key={props.colorType}
-            title="Se"
-            selected={props.selected}
-            setSelected={props.setSelected}
-            colorType={props.colorType}
-            vertical
-          />
-        ))}
         <StoneRow
-          title="Ss"
-          selected={seitensteine1}
-          setSelected={setSeitensteine1}
-          colorType="gelb"
-          vertical
-        />
-        <StoneRow
-          title="Sp"
-          selected={strafpunkte1}
-          setSelected={setStrafpunkte1}
-          colorType="schwarz"
-          vertical
+          title="Matrix"
+          gruppenSelected={gruppen}
+          setGruppenSelected={setGruppen1}
+          yanTasSelected={seitensteine1}
+          setYanTasSelected={setSeitensteine1}
+          serienBereiche={serien}
+          setSerienBereiche={setSerien}
         />
       </div>
       <div className="ergebnis">
         <Holzblock
           gruppen={gruppen}
-          serien={serienFarbig}
-          seitensteine={seitensteine}
-          strafpunkte={strafpunkte}
+          serien={serien}
+          seitensteine={seitensteine1}
         />
-
         <p>
-          Gesamtsumme: <b>{gesamt}</b> (Rest Seitensteine: {seitenRest})
-        </p>
-        <p>
-          Strafpunkte: <b>{summeStrafpunkte}</b>
+          Puan: <b>{gesamt}</b> (Yan: {rest})
         </p>
       </div>
     </div>

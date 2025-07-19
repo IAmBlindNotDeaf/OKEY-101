@@ -1,5 +1,6 @@
 .holzblock {
-  background: #deb887;
+  background: var(--dark-blue);
+  color: #fff;
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(139, 69, 19, 0.15);
   padding: 18px 10px;

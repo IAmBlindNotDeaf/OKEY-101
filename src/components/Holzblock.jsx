@@ -68,55 +68,19 @@ function Holzblock({ gruppen, serien, seitensteine }) {
   // gruppen bleibt wie gehabt
   const gruppenBlocks = gruppen.map((wert) => [wert]);
 
-  // serien ist jetzt ein Array von Arrays: [[rot], [blau], [gelb], [schwarz]]
-  // Wir erzeugen für jede Farbe die passenden Blöcke
-  const serienBlocks = serien.flatMap((serienArr, farbeIdx) =>
-    serienArr.map((wert) => ({ wert, farbeIdx }))
-  );
+  // Serien ist jetzt ein Array von Bereichen (Arrays)
+  const serienBlocks = Array.isArray(serien)
+    ? serien.map((bereich, idx) => ({
+        werte: bereich,
+        farbeIdx: idx % 4, // 0=rot, 1=blau, 2=gelb, 3=schwarz
+      }))
+    : [];
 
-  // Seitensteine-Zuordnung: bevorzugt an Serien
+  // Entferne die Logik, die Seitensteine an Serien anreiht
+  // Seitensteine nur noch an Gruppen anlegen (blockweise, pro Block maximal 1 Seitenstein)
   let verwendeteSeitensteine = new Set();
-  let seitenZuSerien = [];
   let seitenZuGruppen = [];
 
-  // 1. Versuche, Seitensteine an Serien anzulegen
-  serienBlocks.forEach((block, sidx) => {
-    const wert = block.wert !== undefined ? block.wert : block[0];
-    let steine = [wert - 1, wert, wert + 1].map((v) => {
-      let anzeige = v;
-      if (v < 2) anzeige = 1;
-      if (v > 12) anzeige = 13;
-      return anzeige;
-    });
-    let serienSteine = [...steine];
-    let zuSerien = [];
-    seitensteine.forEach((s, idx) => {
-      if (verwendeteSeitensteine.has(idx)) return;
-      // Prüfe, ob der Seitenstein lückenlos links oder rechts passt
-      const min = Math.min(...serienSteine);
-      const max = Math.max(...serienSteine);
-      if (s === min - 1 && min > 1) {
-        // Links anfügen
-        const testArr = [s, ...serienSteine];
-        if (istLueckenlos(testArr)) {
-          serienSteine = [s, ...serienSteine];
-          verwendeteSeitensteine.add(idx);
-          zuSerien.push(s);
-        }
-      } else if (s === max + 1 && max < 13) {
-        // Rechts anfügen
-        const testArr = [...serienSteine, s];
-        if (istLueckenlos(testArr)) {
-          serienSteine = [...serienSteine, s];
-          verwendeteSeitensteine.add(idx);
-          zuSerien.push(s);
-        }
-      }
-    });
-    seitenZuSerien.push(zuSerien);
-  });
-
-  // 2. Übrige Seitensteine an Gruppen anlegen (blockweise, pro Block maximal 1 Seitenstein)
   gruppenBlocks.forEach((block, gidx) => {
     const wert = block[0];
     let zuGruppe = [];
@@ -142,8 +106,8 @@ function Holzblock({ gruppen, serien, seitensteine }) {
     })),
     ...serienBlocks.map((block, idx) => ({
       type: "serie",
-      block: [block.wert],
-      seiten: seitenZuSerien[idx] || [],
+      block: block.werte,
+      seiten: [], // keine Seitensteine mehr an Serien
       key: `sblock-${idx}`,
       farbeIdx: block.farbeIdx, // 0=rot, 1=blau, 2=gelb, 3=schwarz
     })),
@@ -173,13 +137,12 @@ function Holzblock({ gruppen, serien, seitensteine }) {
       ];
     } else {
       // Serie
-      const wert = b.block[0];
-      // Sammle alle Steine (inkl. Seitensteine) und sortiere sie aufsteigend
-      let steineArr = [wert - 1, wert, wert + 1, ...b.seiten];
-      steineArr = steineArr.map(v => {
+      // Bereich als Block, ggf. mit Seitensteinen, alles sortiert
+      let steineArr = [...b.block, ...b.seiten];
+      steineArr = steineArr.map((v) => {
         let anzeige = v;
-        if (v < 2) anzeige = 1;
-        if (v > 12) anzeige = 13;
+        if (anzeige < 2) anzeige = 1;
+        if (anzeige > 12) anzeige = 13;
         return anzeige;
       });
       steineArr = Array.from(new Set(steineArr)).sort((a, b) => a - b);
